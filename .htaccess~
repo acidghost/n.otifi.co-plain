@@ -1,0 +1,5 @@
+Options +FollowSymLinks  
+Options +Indexes  
+RewriteEngine On
+RewriteCond	%{HTTP_REFERER}	^n.otifi.co$
+RewriteRule	^(.+)	http://n.otifi.co/ [R,L]

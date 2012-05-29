@@ -1,0 +1,107 @@
+@import "bootstrap/bootstrap.less";
+
+body {
+  padding-top: 60px;
+  padding-bottom: 40px;
+}
+
+@import "bootstrap/responsive.less";
+
+
+/* ===== Primary Styles ========================================================
+   Author: Codeworks
+   ========================================================================== */
+
+body {
+	background: url('./img/bg.png');
+}
+
+div.container {
+	#container-wrapper {
+		#content {
+			background: rgba(255,255,255,.85);
+			.border-radius(15px);
+			position: relative;
+			#fb-login-button {
+				position: absolute;
+				top: 32px;
+				right: 0px;
+			}
+			#fb-facepile {
+				margin: 5px 0px;
+				float: left;
+				padding-left: 50px;
+			}
+			#fb-like-box {
+				width: 150px;
+				float: right;
+			}
+			h1#title {
+				padding-top: 30px !important;
+				padding-bottom: 30px !important;
+				text-transform: uppercase;
+				letter-spacing: 4px;
+				#n_results { color: lighten(@red, 25%); letter-spacing: -4px; }
+			}
+			&>p {
+				margin-left: 3%;
+				margin-right: 10%;
+				text-transform: uppercase;
+				font-size: smaller;
+				text-align: right;
+				color: @linkColor;
+				strong { text-transform: none; }
+			}
+			form {
+				width: 90%;
+				label.error {
+					color: @red;
+					font-size: x-small;
+					padding-left: 12px;
+				}
+				&.form-horizontal {
+					input[type="text"], input[type="email"] { width: 100%; }
+					a.btn { float: right; }
+				}
+				&.form-inline {
+					margin-left: 15%;
+					input { width: 50%; }
+				}
+			}
+			#subscription-results {
+				display: none;
+			}
+			#results {
+				padding-left: 50px;
+				h4 { color: @grayLight; }
+				#dj-img-large { width: 80%; }
+				#dj-img-small { width: 80px; }
+				#ajax-subscribe {
+					margin-top: 25px;
+					width: 80%;
+					i { float: left; position: relative; top: 10px; }
+					p { font-size: 110%; text-align: left; width: 80%; float: right; }
+					.as-email {
+						font-size: 70%;
+						float: left;
+						text-align: justify;
+						white-space: nowrap;
+					}
+				}
+			}
+			footer {
+				.bottom-nav { float:left; padding-left: 50px; }
+				.credits { float: right; text-align: right; }
+			}
+		}
+	}
+}
+
+
+
+
+
+
+
+
+

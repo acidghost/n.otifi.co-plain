@@ -1,0 +1,50 @@
+<?php
+
+$email = (isset($_POST["email"])/* && strcmp($_POST["email"], "email")!=0*/) ? (trim($_POST["email"])) : (null);
+$artist = isset($_POST["artist"]) ? (trim($_POST["artist"])) : (null);
+
+function convert_artist_name($artist_input) {
+	$result = trim($artist_input);
+	$result = preg_replace('/[^\w.]/','',$result);
+	$result = strtolower($result);
+	if(strcmp(substr($result, count($result)-1), ".") == 0) {
+		$result = substr($result, 0, count($result)-2);
+	}
+	
+	return $result; 
+}
+
+$artist_id_nome = convert_artist_name($artist);
+
+$db = mysqli_connect("localhost", "root", "monamona", "residentadvisorcrawler");
+if(!$db) { die("Can't connect: " . mysqli_connect_error()); }
+
+$query = $db->query("SELECT ID_nome_artista
+		     FROM artisti
+		     WHERE ID_nome_artista LIKE '%$artist_id_nome%'");
+$affected_rows = mysqli_affected_rows($db);
+if($affected_rows == 1) {
+	// artista esistente in database
+} elseif($affected_rows == 0) {
+	// artista non esistente in database
+	require_once("./simplehtmldom/simple_html_dom.php");
+	$url = "http://www.residentadvisor.net/dj/" . $artist_id_nome . "/dates";
+	$artist_page = file_get_html($url);
+	$active_page = $artist_page->find("span[class=cat-subnav-on]", 0)->plaintext;
+	if(strcmp($active_page, "Top 1000") == 0) {
+		// artista non trovato
+		header("Location: search.php?a=".$artist."&email=".$email);
+		exit;
+	} elseif(strcmp($active_page, "Events") == 0) {
+		// artista trovato - exact match
+		$artist_found_name = $artist_page->find("h1[class=title2]", 0)->plaintext;
+		$sql = "INSERT INTO artisti (nome_artista, ID_nome_artista)
+			VALUES ('$artist_found_name', '$artist_id_nome')";
+		if(!mysqli_query($db, $sql))
+			die("Errore durante l'inserimento dei dati.\n");
+		echo "Artista trovato: " . $artist_id_nome . "<br />";
+		echo "URL: " . $url;
+	}
+}
+
+?>
